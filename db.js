@@ -31,6 +31,18 @@ CREATE TABLE IF NOT EXISTS orders (
   status TEXT NOT NULL DEFAULT 'Diproses',
   created_at TEXT NOT NULL DEFAULT (date('now'))
 );
+CREATE TABLE IF NOT EXISTS messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  message TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS settings (
+  user_id INTEGER PRIMARY KEY REFERENCES users(id),
+  language TEXT NOT NULL DEFAULT 'id',
+  notifications INTEGER NOT NULL DEFAULT 1
+);
 `);
 
 if (db.prepare('SELECT COUNT(*) c FROM users').get().c === 0) {

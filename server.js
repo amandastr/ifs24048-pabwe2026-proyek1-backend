@@ -8,7 +8,7 @@ const app = express();
 const SECRET = process.env.JWT_SECRET || 'dolceria-dev-secret';
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+app.use(cors({ origin: process.env.FRONTEND_URL || true }));
 app.use(express.json());
 
 function auth(req, res, next) {
@@ -58,6 +58,33 @@ app.get('/api/orders', auth, (req, res) => {
     FROM orders o JOIN products p ON p.id = o.product_id
     WHERE o.user_id = ? ORDER BY o.id DESC`).all(req.user.id);
   res.json(rows);
+});
+
+app.post('/api/messages', (req, res) => {
+  const { nama, email, pesan } = req.body || {};
+  const valid =
+    typeof nama === 'string' && nama.trim() && nama.length <= 100 &&
+    typeof email === 'string' && /^\S+@\S+\.\S+$/.test(email) &&
+    typeof pesan === 'string' && pesan.trim().length >= 10 && pesan.length <= 1000;
+  if (!valid) return res.status(400).json({ message: 'Data pesan tidak valid.' });
+  db.prepare('INSERT INTO messages (name, email, message) VALUES (?, ?, ?)').run(nama.trim(), email.trim(), pesan.trim());
+  res.status(201).json({ message: 'Pesan diterima.' });
+});
+
+app.get('/api/settings', auth, (req, res) => {
+  const row = db.prepare('SELECT language, notifications FROM settings WHERE user_id = ?').get(req.user.id);
+  res.json({ language: row ? row.language : 'id', notifications: row ? Boolean(row.notifications) : true });
+});
+
+app.put('/api/settings', auth, (req, res) => {
+  const { language, notifications } = req.body || {};
+  if (!['id', 'en'].includes(language) || typeof notifications !== 'boolean') {
+    return res.status(400).json({ message: 'Data pengaturan tidak valid.' });
+  }
+  db.prepare(`INSERT INTO settings (user_id, language, notifications) VALUES (?, ?, ?)
+    ON CONFLICT(user_id) DO UPDATE SET language = excluded.language, notifications = excluded.notifications`)
+    .run(req.user.id, language, notifications ? 1 : 0);
+  res.json({ language, notifications });
 });
 
 if (require.main === module) {
