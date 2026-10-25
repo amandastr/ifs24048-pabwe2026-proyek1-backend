@@ -8,7 +8,7 @@ const app = express();
 const SECRET = process.env.JWT_SECRET || 'dolceria-dev-secret';
 const PORT = process.env.PORT || 3001;
 
-app.use(cors({ origin: process.env.FRONTEND_URL || true }));
+app.use(cors());
 app.use(express.json());
 
 function auth(req, res, next) {
