@@ -2,8 +2,10 @@ const Database = require('better-sqlite3');
 const bcrypt = require('bcryptjs');
 const path = require('path');
 
-const db = new Database(path.join(__dirname, 'dolceria.db'));
-db.pragma('journal_mode = WAL');
+// Di Vercel hanya /tmp yang bisa ditulis; database dibuat ulang dari seed.
+const dbPath = process.env.VERCEL ? '/tmp/dolceria.db' : path.join(__dirname, 'dolceria.db');
+const db = new Database(dbPath);
+if (!process.env.VERCEL) db.pragma('journal_mode = WAL');
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS users (
